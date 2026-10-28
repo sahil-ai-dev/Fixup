@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — Fixup</title>
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    /* Admin-specific layout */
+    .admin-layout { display: flex; min-height: 100vh; }
+    .admin-sidebar {
+      width: var(--sidebar-width);
+      background: var(--color-bg-card);
+      border-right: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: var(--z-sticky);
+      transition: transform var(--transition-base);
+    }
+    .admin-sidebar-header {
+      padding: var(--space-5) var(--space-6);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .admin-sidebar-nav { flex: 1; padding: var(--space-4) 0; overflow-y: auto; }
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: 10px var(--space-6);
+      color: var(--color-text-secondary);
+      font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      transition: all var(--transition-fast);
+      border-radius: 0;
+    }
+    .sidebar-nav-item:hover { color: var(--color-primary); background: var(--color-accent); }
+    .sidebar-nav-item.active {
+      color: var(--color-primary);
+      background: var(--color-accent);
+      font-weight: var(--weight-semibold);
+      border-right: 3px solid var(--color-primary);
+    }
+    .sidebar-nav-item svg { flex-shrink: 0; }
+    .sidebar-nav-separator { height: 1px; background: var(--color-border); margin: var(--space-3) var(--space-6); }
+
+    .admin-main { margin-left: var(--sidebar-width); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .admin-topbar {
+      height: var(--topbar-height);
+      background: var(--color-bg-card);
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-8);
+      position: sticky;
+      top: 0;
+      z-index: calc(var(--z-sticky) - 1);
+    }
+    .admin-topbar-title { font-size: var(--text-xl); font-weight: var(--weight-bold); color: var(--color-text-primary); }
+    .admin-topbar-right { display: flex; align-items: center; gap: var(--space-3); }
+    .admin-content { padding: var(--space-8); flex: 1; }
+    .admin-section { display: none; }
+    .admin-section.active { display: block; }
+
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-5); margin-bottom: var(--space-8); }
+    .stat-card {
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-icon {
+      width: 52px; height: 52px;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .stat-value { font-size: var(--text-3xl); font-weight: var(--weight-bold); color: var(--color-text-primary); line-height: 1; }
+    .stat-label { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-1); }
+    .stat-change { font-size: var(--text-xs); margin-top: var(--space-1); font-weight: var(--weight-medium); }
+    .stat-change.up { color: var(--color-success); }
+    .stat-change.down { color: var(--color-error); }
+
+    /* Data table */
+    .data-table-wrapper { background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+    .data-table-header { padding: var(--space-5) var(--space-6); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+    .data-table-title { font-size: var(--text-lg); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+    .table-search { position: relative; }
+    .table-search input {
+      padding: 8px var(--space-4) 8px 36px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-size: var(--text-sm);
+      width: 240px;
+      transition: all var(--transition-fast);
+    }
+    .table-search input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(109,40,217,0.1); }
+    .table-search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: var(--color-bg-muted);
+      padding: 10px var(--space-4);
+      text-align: left;
+      font-size: var(--text-xs);
+      font-weight: var(--weight-semibold);
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--color-border);
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid var(--color-border); transition: background var(--transition-fast); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--color-bg-subtle); }
+    tbody td { padding: 12px var(--space-4); font-size: var(--text-sm); color: var(--color-text-primary); vertical-align: middle; }
+    .table-empty { text-align: center; padding: var(--space-12); color: var(--color-text-muted); }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: var(--radius-full); font-size: var(--text-xs); font-weight: var(--weight-semibold); }
+    .badge-success { background: var(--color-success-bg); color: var(--color-success); }
+    .badge-warning { background: var(--color-warning-bg); color: var(--color-warning); }
+    .badge-error { background: var(--color-error-bg); color: var(--color-error); }
+    .badge-info { background: var(--color-info-bg); color: var(--color-info); }
+    .badge-neutral { background: var(--color-bg-subtle); color: var(--color-text-secondary); }
+    .badge-purple { background: var(--color-accent); color: var(--color-primary); }
+
+    /* Activity feed */
+    .activity-feed { background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); box-shadow: var(--shadow-sm); }
+    .activity-item { display: flex; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border); }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+    .activity-dot-success { background: var(--color-success); }
+    .activity-dot-info { background: var(--color-info); }
+    .activity-dot-warning { background: var(--color-warning); }
+    .activity-text { font-size: var(--text-sm); color: var(--color-text-primary); }
+    .activity-time { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; }
+
+    /* Bar chart */
+    .bar-chart { background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); box-shadow: var(--shadow-sm); }
+    .bar-chart-bars { display: flex; align-items: flex-end; gap: var(--space-4); height: 160px; margin-top: var(--space-4); }
+    .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+    .bar { width: 100%; background: var(--gradient-primary); border-radius: var(--radius-xs) var(--radius-xs) 0 0; transition: height var(--transition-slow); min-height: 4px; }
+    .bar-label { font-size: var(--text-xs); color: var(--color-text-muted); text-align: center; }
+    .bar-value { font-size: var(--text-xs); font-weight: var(--weight-semibold); color: var(--color-primary); }
+    .overview-grid { display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-6); }
+
+    /* Row actions */
+    .row-actions { display: flex; gap: var(--space-2); align-items: center; }
+    .btn-table { padding: 5px 10px; font-size: var(--text-xs); border-radius: var(--radius-sm); font-weight: var(--weight-medium); cursor: pointer; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-secondary); transition: all var(--transition-fast); }
+    .btn-table:hover { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-accent); }
+    .btn-table-danger:hover { border-color: var(--color-error); color: var(--color-error); background: var(--color-error-bg); }
+
+    /* Filter row */
+    .filter-row { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+    .filter-row select, .filter-row input[type="date"] {
+      padding: 8px var(--space-3);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-size: var(--text-sm);
+    }
+
+    /* Mobile sidebar toggle */
+    .sidebar-toggle-btn {
+      display: none;
+      position: fixed;
+      top: var(--space-4);
+      left: var(--space-4);
+      z-index: calc(var(--z-sticky) + 1);
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 8px;
+      cursor: pointer;
+    }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: calc(var(--z-sticky) - 1); }
+    .sidebar-overlay.active { display: block; }
+
+    @media (max-width: 1024px) {
+      .admin-sidebar { transform: translateX(-100%); }
+      .admin-sidebar.open { transform: translateX(0); }
+      .admin-main { margin-left: 0; }
+      .sidebar-toggle-btn { display: flex; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .overview-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .admin-content { padding: var(--space-4); }
+      .admin-topbar { padding: 0 var(--space-4); }
+    }
+
+    /* Admin badge banner */
+    .admin-banner {
+      background: linear-gradient(90deg, #7C3AED, #9F67FA);
+      color: white;
+      text-align: center;
+      padding: 8px var(--space-4);
+      font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
+    }
+
+    /* Modal styles */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: var(--z-modal);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4);
+    }
+    .modal-backdrop.active { display: flex; }
+    .modal-box {
+      background: var(--color-bg-card);
+      border-radius: var(--radius-xl);
+      padding: var(--space-8);
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .modal-close-btn {
+      position: absolute; top: var(--space-4); right: var(--space-4);
+      background: var(--color-bg-subtle);
+      border: none;
+      border-radius: 50%;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: var(--color-text-secondary);
+    }
+    .modal-close-btn:hover { background: var(--color-border); }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-5); }
+    .detail-item label { font-size: var(--text-xs); color: var(--color-text-muted); display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .detail-item span { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-primary); }
+
+    /* Subs cards */
+    .subs-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-5); margin-bottom: var(--space-6); }
+    @media (max-width: 640px) { .subs-summary { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar overlay for mobile -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- Sidebar toggle (mobile) -->
+<button class="sidebar-toggle-btn" id="sidebar-toggle" aria-label="Open sidebar">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <div class="admin-sidebar-header">
+      <a href="../index.html" class="navbar-logo">
+        <div class="navbar-logo-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </div>
+        <span class="navbar-logo-text">Fix<span>up</span></span>
+      </a>
+      <div style="margin-top:var(--space-2);font-size:var(--text-xs);color:var(--color-text-muted);font-weight:var(--weight-medium);">Admin Panel</div>
+    </div>
+
+    <nav class="admin-sidebar-nav">
+      <button class="sidebar-nav-item active" data-section="overview">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Overview
+      </button>
+      <button class="sidebar-nav-item" data-section="users">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Users
+      </button>
+      <button class="sidebar-nav-item" data-section="mechanics">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        Mechanics
+      </button>
+      <button class="sidebar-nav-item" data-section="bookings">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Bookings
+      </button>
+      <button class="sidebar-nav-item" data-section="subscriptions">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Subscriptions
+      </button>
+      <button class="sidebar-nav-item" data-section="transactions">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Transactions
+      </button>
+      <button class="sidebar-nav-item" data-section="complaints">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        Complaints
+      </button>
+      <div class="sidebar-nav-separator"></div>
+      <button class="sidebar-nav-item btn-table-danger" data-action="logout">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="admin-main">
+    <div class="admin-banner">
+      🛡️ Admin Dashboard — Demo Mode &nbsp;|&nbsp; <span id="admin-name-display">Admin</span> &nbsp;|&nbsp; <a href="#" id="reset-demo-btn" style="color:rgba(255,255,255,0.8);text-decoration:underline;">Reset Demo Data</a>
+    </div>
+
+    <!-- TOPBAR -->
+    <div class="admin-topbar">
+      <div class="admin-topbar-title" id="section-title">Overview</div>
+      <div class="admin-topbar-right">
+        <button class="btn btn-sm btn-secondary theme-toggle" aria-label="Toggle theme">
+          <span class="theme-toggle-icon"></span>
+        </button>
+        <div style="font-size:var(--text-sm);color:var(--color-text-secondary);" id="topbar-date"></div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="admin-content">
+
+      <!-- ══════════════════════════ OVERVIEW ══════════════════════════ -->
+      <section class="admin-section active" id="section-overview">
+        <div class="stats-grid" id="overview-stats"></div>
+        <div class="overview-grid">
+          <!-- Activity Feed -->
+          <div>
+            <h3 style="font-size:var(--text-lg);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);">Recent Activity</h3>
+            <div class="activity-feed" id="activity-feed"></div>
+          </div>
+          <!-- Bar Chart -->
+          <div>
+            <h3 style="font-size:var(--text-lg);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);">Bookings by Category</h3>
+            <div class="bar-chart" id="category-chart"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════ USERS ══════════════════════════ -->
+      <section class="admin-section" id="section-users">
+        <div class="data-table-wrapper">
+          <div class="data-table-header">
+            <div class="data-table-title">All Users</div>
+            <div class="table-search">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="users-search" placeholder="Search users..." oninput="filterTable('users-tbody', this.value, [0,1,2,3])" />
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th><th>Name</th><th>Mobile</th><th>Email</th><th>Joined</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════ MECHANICS ══════════════════════════ -->
+      <section class="admin-section" id="section-mechanics">
+        <div class="data-table-wrapper">
+          <div class="data-table-header">
+            <div class="data-table-title">All Mechanics</div>
+            <div class="table-search">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="mechanics-search" placeholder="Search mechanics..." oninput="filterTable('mechanics-tbody', this.value, [0,1,2,3])" />
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th><th>Name</th><th>Mobile</th><th>Categories</th><th>Rating</th><th>Subscription</th><th>Available</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="mechanics-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════ BOOKINGS ══════════════════════════ -->
+      <section class="admin-section" id="section-bookings">
+        <div class="data-table-wrapper">
+          <div class="data-table-header">
+            <div class="data-table-title">All Bookings</div>
+            <div class="filter-row">
+              <select id="booking-status-filter" onchange="applyBookingFilters()">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="pending">Pending</option>
+              </select>
+              <div class="table-search">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="bookings-search" placeholder="Search bookings..." oninput="applyBookingFilters()" />
+              </div>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Booking ID</th><th>User</th><th>Mechanic</th><th>Device</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="bookings-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════ SUBSCRIPTIONS ══════════════════════════ -->
+      <section class="admin-section" id="section-subscriptions">
+        <div class="subs-summary" id="subs-summary"></div>
+        <div class="data-table-wrapper">
+          <div class="data-table-header">
+            <div class="data-table-title">Mechanic Subscriptions</div>
+            <div class="table-search">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="subs-search" placeholder="Search..." oninput="filterTable('subs-tbody', this.value, [0,1])" />
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr><th>Mechanic</th><th>Plan</th><th>Start Date</th><th>Expiry</th><th>Status</th></tr>
+              </thead>
+              <tbody id="subs-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════ TRANSACTIONS ══════════════════════════ -->
+      <section class="admin-section" id="section-transactions">
+        <div class="data-table-wrapper">
+          <div class="data-table-header">
+            <div class="data-table-title">All Transactions</div>
+            <div class="table-search">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="txn-search" placeholder="Search transactions..." oninput="filterTable('txn-tbody', this.value, [0,1,2])" />
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr><th>TXN ID</th><th>Booking</th><th>User/Mechanic</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th></tr>
+              </thead>
+              <tbody id="txn-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════ COMPLAINTS ══════════════════════════ -->
+      <section class="admin-section" id="section-complaints">
+        <div class="data-table-wrapper">
+          <div class="data-table-header">
+            <div class="data-table-title">Complaints & Support</div>
+            <div class="table-search">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="complaints-search" placeholder="Search complaints..." oninput="filterTable('complaints-tbody', this.value, [0,1,2,3])" />
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>User</th><th>Category</th><th>Subject</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="complaints-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /admin-content -->
+  </main>
+</div><!-- /admin-layout -->
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- User Detail Modal -->
+<div class="modal-backdrop" id="user-modal">
+  <div class="modal-box">
+    <button class="modal-close-btn" onclick="closeModal('user-modal')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div id="user-modal-content"></div>
+  </div>
+</div>
+
+<!-- Booking Detail Modal -->
+<div class="modal-backdrop" id="booking-modal">
+  <div class="modal-box">
+    <button class="modal-close-btn" onclick="closeModal('booking-modal')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div id="booking-modal-content"></div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="../js/config.js"></script>
+<script src="../js/storage.js?v=2"></script>
+<script src="../js/app.js?v=2"></script>
+<script>
+  // ── Auth guard ──
+  if (!Auth.requireAuth('admin')) { /* redirected */ }
+
+  const session = Auth.getSession();
+
+  // ── Helpers ──
+  function maskMobile(m) {
+    if (!m) return '—';
+    return m.substring(0, 3) + '****' + m.substring(7);
+  }
+
+  function statusBadge(status) {
+    const map = {
+      active: 'badge-success', completed: 'badge-success',
+      pending: 'badge-warning', cancelled: 'badge-error',
+      resolved: 'badge-success', 'under review': 'badge-warning',
+      submitted: 'badge-info', disabled: 'badge-error',
+    };
+    const cls = map[(status||'').toLowerCase()] || 'badge-neutral';
+    return `<span class="badge ${cls}">${status || '—'}</span>`;
+  }
+
+  function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : '—'; }
+
+  // ── Sidebar navigation ──
+  const sectionTitles = {
+    overview: 'Overview',
+    users: 'Users',
+    mechanics: 'Mechanics',
+    bookings: 'Bookings',
+    subscriptions: 'Subscriptions',
+    transactions: 'Transactions',
+    complaints: 'Complaints',
+  };
+
+  document.querySelectorAll('.sidebar-nav-item[data-section]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const section = btn.dataset.section;
+
+      document.querySelectorAll('.sidebar-nav-item').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+      document.getElementById('section-' + section)?.classList.add('active');
+
+      document.getElementById('section-title').textContent = sectionTitles[section] || section;
+
+      // Render section data
+      const renderers = { users: renderUsers, mechanics: renderMechanics, bookings: renderBookings, subscriptions: renderSubscriptions, transactions: renderTransactions, complaints: renderComplaints };
+      if (renderers[section]) renderers[section]();
+
+      // Close mobile sidebar
+      closeMobileSidebar();
+    });
+  });
+
+  // ── Mobile sidebar ──
+  const sidebarEl = document.getElementById('admin-sidebar');
+  const overlayEl = document.getElementById('sidebar-overlay');
+  document.getElementById('sidebar-toggle').addEventListener('click', () => {
+    sidebarEl.classList.add('open');
+    overlayEl.classList.add('active');
+  });
+  overlayEl.addEventListener('click', closeMobileSidebar);
+  function closeMobileSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('active');
+  }
+
+  // ── Top bar ──
+  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+  if (session) document.getElementById('admin-name-display').textContent = session.name || 'Admin';
+
+  // ── Universal table text filter ──
+  function filterTable(tbodyId, query, colIndexes) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    const q = query.trim().toLowerCase();
+    Array.from(tbody.rows).forEach(row => {
+      const text = colIndexes.map(i => (row.cells[i]?.textContent || '')).join(' ').toLowerCase();
+      row.style.display = q === '' || text.includes(q) ? '' : 'none';
+    });
+  }
+
+  // ── OVERVIEW ──
+  function renderOverview() {
+    const allUsers = Storage.get('users', []);
+    const users = allUsers.filter(u => u.role === 'user');
+    const mechanics = allUsers.filter(u => u.role === 'mechanic');
+    const bookings = Storage.get('bookings', []);
+    const transactions = Storage.get('transactions', []);
+    const activeBookings = bookings.filter(b => b.status === 'active');
+    const completedBookings = bookings.filter(b => b.status === 'completed');
+    const revenue = transactions.reduce((s, t) => s + (t.amount || 0), 0);
+    const activeSubs = mechanics.filter(m => m.mechanic?.subscription?.active).length;
+
+    const stats = [
+      { label: 'Total Users', value: users.length, icon: '👤', color: '#6D28D9', bg: '#EDE9FE', change: '+12% this month', up: true },
+      { label: 'Total Mechanics', value: mechanics.length, icon: '🔧', color: '#0891B2', bg: '#E0F2FE', change: '+3 new this week', up: true },
+      { label: 'Active Bookings', value: activeBookings.length, icon: '📋', color: '#D97706', bg: '#FEF3C7', change: 'In progress', up: null },
+      { label: 'Completed Repairs', value: completedBookings.length, icon: '✅', color: '#16A34A', bg: '#F0FDF4', change: '+8 today', up: true },
+      { label: 'Platform Revenue', value: '₹' + revenue.toLocaleString('en-IN'), icon: '💰', color: '#DC2626', bg: '#FEF2F2', change: '+₹4,200 this week', up: true },
+      { label: 'Active Subscriptions', value: activeSubs, icon: '⭐', color: '#7C3AED', bg: '#F5F3FF', change: 'Monthly plans', up: null },
+    ];
+
+    const grid = document.getElementById('overview-stats');
+    grid.innerHTML = stats.map(s => `
+      <div class="stat-card">
+        <div class="stat-icon" style="background:${s.bg};color:${s.color};font-size:22px;">${s.icon}</div>
+        <div>
+          <div class="stat-value">${s.value}</div>
+          <div class="stat-label">${s.label}</div>
+          ${s.up !== null ? `<div class="stat-change ${s.up ? 'up' : 'down'}">${s.up ? '▲' : '▼'} ${s.change}</div>` : `<div class="stat-change" style="color:var(--color-text-muted);">${s.change}</div>`}
+        </div>
+      </div>
+    `).join('');
+
+    // Activity feed
+    const activities = [
+      { dot: 'activity-dot-success', text: 'New booking <b>BK-2026-002</b> created by Rahul Sharma', time: '2026-10-28 08:00' },
+      { dot: 'activity-dot-info', text: 'Mechanic <b>Priya Mehta</b> accepted tablet repair request', time: '2026-10-28 08:20' },
+      { dot: 'activity-dot-success', text: 'Booking <b>BK-2026-001</b> completed by Vikram Singh', time: '2026-10-15 11:45' },
+      { dot: 'activity-dot-info', text: 'New user <b>Rahul Sharma</b> registered', time: '2026-01-15 10:00' },
+      { dot: 'activity-dot-warning', text: 'Complaint <b>CPL-2026-001</b> resolved by admin', time: '2026-10-17 14:00' },
+      { dot: 'activity-dot-success', text: 'Transaction <b>TXN-2026-001</b> of ₹1,800 completed', time: '2026-10-15 12:00' },
+    ];
+    document.getElementById('activity-feed').innerHTML = activities.map(a => `
+      <div class="activity-item">
+        <div class="activity-dot ${a.dot}"></div>
+        <div>
+          <div class="activity-text">${a.text}</div>
+          <div class="activity-time">${a.time}</div>
+        </div>
+      </div>
+    `).join('');
+
+    // Bar chart
+    const categoryData = { mobile: 8, laptop: 5, tablet: 3, computer: 2, accessories: 1, other: 1 };
+    const max = Math.max(...Object.values(categoryData));
+    const chartContainer = document.getElementById('category-chart');
+    chartContainer.innerHTML = `
+      <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--color-text-primary);">Bookings by Category</div>
+      <div class="bar-chart-bars">
+        ${Object.entries(categoryData).map(([cat, val]) => `
+          <div class="bar-item">
+            <div class="bar-value">${val}</div>
+            <div class="bar" style="height:${Math.round((val/max)*140)}px;"></div>
+            <div class="bar-label">${cap(cat)}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // ── USERS ──
+  function renderUsers() {
+    const users = Storage.get('users', []).filter(u => u.role === 'user');
+    const tbody = document.getElementById('users-tbody');
+    if (!users.length) { tbody.innerHTML = `<tr><td colspan="7" class="table-empty">No users found.</td></tr>`; return; }
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td><code style="font-size:11px;background:var(--color-bg-subtle);padding:2px 6px;border-radius:4px;">${u.id}</code></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:var(--space-2);">
+            <div style="width:30px;height:30px;border-radius:50%;background:var(--gradient-primary);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">${getInitials(u.name)}</div>
+            <span style="font-weight:var(--weight-medium);">${u.name}</span>
+          </div>
+        </td>
+        <td>${maskMobile(u.mobile)}</td>
+        <td>${u.email || '—'}</td>
+        <td>${formatDate(u.createdAt)}</td>
+        <td>${statusBadge(u.disabled ? 'disabled' : 'active')}</td>
+        <td>
+          <div class="row-actions">
+            <button class="btn-table" onclick="showUserDetail('${u.id}')">View</button>
+            <button class="btn-table btn-table-danger" onclick="toggleUserStatus('${u.id}', ${!!u.disabled})" id="user-toggle-${u.id}">${u.disabled ? 'Enable' : 'Disable'}</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function showUserDetail(userId) {
+    const users = Storage.get('users', []);
+    const u = users.find(x => x.id === userId);
+    if (!u) return;
+    const bookings = Storage.get('bookings', []).filter(b => b.userId === userId);
+    document.getElementById('user-modal-content').innerHTML = `
+      <div style="display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6);">
+        <div style="width:56px;height:56px;border-radius:50%;background:var(--gradient-primary);color:white;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;">${getInitials(u.name)}</div>
+        <div>
+          <h3 style="margin:0;">${u.name}</h3>
+          <div style="color:var(--color-text-muted);font-size:var(--text-sm);">${u.role} · ID: ${u.id}</div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item"><label>Mobile</label><span>${u.mobile}</span></div>
+        <div class="detail-item"><label>Email</label><span>${u.email || '—'}</span></div>
+        <div class="detail-item"><label>Gender</label><span>${u.gender || '—'}</span></div>
+        <div class="detail-item"><label>Joined</label><span>${formatDate(u.createdAt)}</span></div>
+        <div class="detail-item"><label>City</label><span>${u.address?.city || '—'}</span></div>
+        <div class="detail-item"><label>Total Bookings</label><span>${bookings.length}</span></div>
+      </div>
+      <div style="margin-top:var(--space-4);padding:var(--space-3);background:var(--color-bg-subtle);border-radius:var(--radius-md);">
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:4px;">Address</div>
+        <div style="font-size:var(--text-sm);">${u.address ? `${u.address.house}, ${u.address.street}, ${u.address.city} - ${u.address.pin}` : 'Not provided'}</div>
+      </div>
+    `;
+    openModal('user-modal');
+  }
+
+  function toggleUserStatus(userId, currentlyDisabled) {
+    const users = Storage.get('users', []);
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx !== -1) {
+      users[idx].disabled = !currentlyDisabled;
+      Storage.set('users', users);
+      Toast.success('Status Updated', `User has been ${!currentlyDisabled ? 'disabled' : 'enabled'}.`);
+      renderUsers();
+    }
+  }
+
+  // ── MECHANICS ──
+  function renderMechanics() {
+    const mechanics = Storage.get('users', []).filter(u => u.role === 'mechanic');
+    const tbody = document.getElementById('mechanics-tbody');
+    if (!mechanics.length) { tbody.innerHTML = `<tr><td colspan="8" class="table-empty">No mechanics found.</td></tr>`; return; }
+    tbody.innerHTML = mechanics.map(m => {
+      const sub = m.mechanic?.subscription;
+      const subBadge = sub?.active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-neutral">None</span>';
+      const cats = (m.mechanic?.categories || []).map(c => `<span class="badge badge-purple" style="margin:1px;">${cap(c)}</span>`).join('');
+      const avail = m.mechanic?.available;
+      return `
+        <tr>
+          <td><code style="font-size:11px;background:var(--color-bg-subtle);padding:2px 6px;border-radius:4px;">${m.id}</code></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:var(--space-2);">
+              <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#0891B2,#0E7490);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">${getInitials(m.name)}</div>
+              <span style="font-weight:var(--weight-medium);">${m.name}</span>
+            </div>
+          </td>
+          <td>${maskMobile(m.mobile)}</td>
+          <td>${cats || '—'}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span style="color:#F59E0B;">★</span>
+              <span style="font-weight:var(--weight-semibold);">${m.mechanic?.rating || '—'}</span>
+              <span style="color:var(--color-text-muted);font-size:var(--text-xs);">(${m.mechanic?.reviewCount || 0})</span>
+            </div>
+          </td>
+          <td>${subBadge}</td>
+          <td><span class="badge ${avail ? 'badge-success' : 'badge-neutral'}">${avail ? 'Yes' : 'No'}</span></td>
+          <td>
+            <div class="row-actions">
+              <button class="btn-table" onclick="showMechanicDetail('${m.id}')">View</button>
+              <button class="btn-table" onclick="toggleMechanicAvail('${m.id}', ${!!avail})">${avail ? 'Set Unavailable' : 'Set Available'}</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function showMechanicDetail(mechId) {
+    const users = Storage.get('users', []);
+    const m = users.find(u => u.id === mechId);
+    if (!m) return;
+    const sub = m.mechanic?.subscription;
+    document.getElementById('user-modal-content').innerHTML = `
+      <div style="display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6);">
+        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#0891B2,#0E7490);color:white;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;">${getInitials(m.name)}</div>
+        <div>
+          <h3 style="margin:0;">${m.name}</h3>
+          <div style="color:var(--color-text-muted);font-size:var(--text-sm);">Mechanic · ID: ${m.id}</div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item"><label>Mobile</label><span>${m.mobile}</span></div>
+        <div class="detail-item"><label>Email</label><span>${m.email || '—'}</span></div>
+        <div class="detail-item"><label>Experience</label><span>${m.mechanic?.experience || 0} years</span></div>
+        <div class="detail-item"><label>Rating</label><span>★ ${m.mechanic?.rating} (${m.mechanic?.reviewCount} reviews)</span></div>
+        <div class="detail-item"><label>Working Hours</label><span>${m.mechanic?.workingHours || '—'}</span></div>
+        <div class="detail-item"><label>Radius</label><span>${m.mechanic?.radius || '—'} km</span></div>
+        <div class="detail-item"><label>Start Price</label><span>₹${m.mechanic?.startPrice || '—'}</span></div>
+        <div class="detail-item"><label>Categories</label><span>${(m.mechanic?.categories || []).map(c => cap(c)).join(', ')}</span></div>
+        <div class="detail-item"><label>Subscription</label><span>${sub?.active ? `Active (${cap(sub.plan)})` : 'None'}</span></div>
+        <div class="detail-item"><label>Subscription Expiry</label><span>${sub?.expiryDate ? formatDate(sub.expiryDate) : '—'}</span></div>
+        <div class="detail-item"><label>Available</label><span>${m.mechanic?.available ? 'Yes' : 'No'}</span></div>
+        <div class="detail-item"><label>Joined</label><span>${formatDate(m.createdAt)}</span></div>
+      </div>
+      ${m.mechanic?.bio ? `<div style="margin-top:var(--space-4);padding:var(--space-3);background:var(--color-bg-subtle);border-radius:var(--radius-md);"><div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:4px;">Bio</div><div style="font-size:var(--text-sm);">${m.mechanic.bio}</div></div>` : ''}
+    `;
+    openModal('user-modal');
+  }
+
+  function toggleMechanicAvail(mechId, currentlyAvail) {
+    const users = Storage.get('users', []);
+    const idx = users.findIndex(u => u.id === mechId);
+    if (idx !== -1 && users[idx].mechanic) {
+      users[idx].mechanic.available = !currentlyAvail;
+      Storage.set('users', users);
+      Toast.success('Availability Updated', `Mechanic is now ${!currentlyAvail ? 'available' : 'unavailable'}.`);
+      renderMechanics();
+    }
+  }
+
+  // ── BOOKINGS ──
+  function renderBookings(bookings) {
+    if (!bookings) bookings = Storage.get('bookings', []);
+    const users = Storage.get('users', []);
+    const tbody = document.getElementById('bookings-tbody');
+    if (!bookings.length) { tbody.innerHTML = `<tr><td colspan="8" class="table-empty">No bookings found.</td></tr>`; return; }
+    tbody.innerHTML = bookings.map(b => {
+      const user = users.find(u => u.id === b.userId);
+      return `
+        <tr style="cursor:pointer;" onclick="showBookingDetail('${b.id}')">
+          <td><code style="font-size:11px;background:var(--color-bg-subtle);padding:2px 6px;border-radius:4px;">${b.id}</code></td>
+          <td>${user?.name || b.userId}</td>
+          <td>${b.mechanicName || '—'}</td>
+          <td><span class="badge badge-purple">${cap(b.device?.category)}</span> ${b.device?.model || ''}</td>
+          <td style="font-weight:var(--weight-semibold);">₹${(b.total||0).toLocaleString('en-IN')}</td>
+          <td>${statusBadge(b.status)}</td>
+          <td>${formatDate(b.createdAt)}</td>
+          <td>
+            <button class="btn-table" onclick="event.stopPropagation();showBookingDetail('${b.id}')">Details</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function applyBookingFilters() {
+    const status = document.getElementById('booking-status-filter').value;
+    const query = document.getElementById('bookings-search').value.trim().toLowerCase();
+    let bookings = Storage.get('bookings', []);
+    if (status) bookings = bookings.filter(b => b.status === status);
+    if (query) {
+      bookings = bookings.filter(b =>
+        b.id.toLowerCase().includes(query) ||
+        (b.mechanicName||'').toLowerCase().includes(query) ||
+        (b.device?.model||'').toLowerCase().includes(query) ||
+        (b.device?.category||'').toLowerCase().includes(query)
+      );
+    }
+    renderBookings(bookings);
+  }
+
+  function showBookingDetail(bookingId) {
+    const bookings = Storage.get('bookings', []);
+    const b = bookings.find(x => x.id === bookingId);
+    if (!b) return;
+    const users = Storage.get('users', []);
+    const user = users.find(u => u.id === b.userId);
+    document.getElementById('booking-modal-content').innerHTML = `
+      <h3 style="margin-bottom:var(--space-5);">Booking: ${b.id}</h3>
+      <div class="detail-grid">
+        <div class="detail-item"><label>Customer</label><span>${user?.name || b.userId}</span></div>
+        <div class="detail-item"><label>Mechanic</label><span>${b.mechanicName || '—'}</span></div>
+        <div class="detail-item"><label>Device Category</label><span>${cap(b.device?.category)}</span></div>
+        <div class="detail-item"><label>Device Model</label><span>${b.device?.model || '—'}</span></div>
+        <div class="detail-item"><label>Fault</label><span>${b.device?.fault || '—'}</span></div>
+        <div class="detail-item"><label>Status</label><span>${b.status}</span></div>
+        <div class="detail-item"><label>Amount</label><span>₹${(b.total||0).toLocaleString('en-IN')}</span></div>
+        <div class="detail-item"><label>Payment</label><span>${b.paymentStatus} · ${b.paymentMethod || '—'}</span></div>
+        <div class="detail-item"><label>Created</label><span>${formatDateTime(b.createdAt)}</span></div>
+        <div class="detail-item"><label>Completed</label><span>${b.completedAt ? formatDateTime(b.completedAt) : '—'}</span></div>
+        <div class="detail-item"><label>Transaction ID</label><span>${b.transactionId || '—'}</span></div>
+        <div class="detail-item"><label>Location</label><span>${b.location?.address || '—'}, ${b.location?.city || '—'}</span></div>
+      </div>
+      ${b.review ? `
+        <div style="margin-top:var(--space-4);padding:var(--space-4);background:var(--color-bg-subtle);border-radius:var(--radius-md);">
+          <div style="font-weight:var(--weight-semibold);margin-bottom:var(--space-2);">Customer Review</div>
+          <div style="color:#F59E0B;">${'★'.repeat(b.review.rating)}${'☆'.repeat(5-b.review.rating)}</div>
+          <div style="font-size:var(--text-sm);color:var(--color-text-secondary);margin-top:4px;">${b.review.comment}</div>
+        </div>
+      ` : ''}
+    `;
+    openModal('booking-modal');
+  }
+
+  // ── SUBSCRIPTIONS ──
+  function renderSubscriptions() {
+    const mechanics = Storage.get('users', []).filter(u => u.role === 'mechanic');
+    const activeSubs = mechanics.filter(m => m.mechanic?.subscription?.active);
+
+    // Summary cards
+    const planRevenue = { monthly: 499, quarterly: 1199, yearly: 3999 };
+    const totalRev = activeSubs.reduce((s, m) => {
+      const plan = m.mechanic?.subscription?.plan || 'monthly';
+      return s + (planRevenue[plan] || 499);
+    }, 0);
+
+    document.getElementById('subs-summary').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#F0FDF4;font-size:24px;">✅</div>
+        <div><div class="stat-value">${activeSubs.length}</div><div class="stat-label">Active Subscriptions</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#FEF3C7;font-size:24px;">💰</div>
+        <div><div class="stat-value">₹${totalRev.toLocaleString('en-IN')}</div><div class="stat-label">Subscription Revenue</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#EDE9FE;font-size:24px;">📅</div>
+        <div><div class="stat-value">${mechanics.length - activeSubs.length}</div><div class="stat-label">Inactive / No Plan</div></div>
+      </div>
+    `;
+
+    const tbody = document.getElementById('subs-tbody');
+    if (!mechanics.length) { tbody.innerHTML = `<tr><td colspan="5" class="table-empty">No mechanics found.</td></tr>`; return; }
+    tbody.innerHTML = mechanics.map(m => {
+      const sub = m.mechanic?.subscription;
+      const isActive = sub?.active;
+      const expiryDate = sub?.expiryDate ? new Date(sub.expiryDate) : null;
+      const isExpired = expiryDate && expiryDate < new Date();
+      let statusHtml;
+      if (isActive && !isExpired) statusHtml = '<span class="badge badge-success">Active</span>';
+      else if (isActive && isExpired) statusHtml = '<span class="badge badge-warning">Expired</span>';
+      else statusHtml = '<span class="badge badge-neutral">None</span>';
+      return `
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:var(--space-2);">
+              <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#0891B2,#0E7490);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">${getInitials(m.name)}</div>
+              ${m.name}
+            </div>
+          </td>
+          <td>${sub?.plan ? `<span class="badge badge-purple">${cap(sub.plan)}</span>` : '—'}</td>
+          <td>${sub?.startDate ? formatDate(sub.startDate) : '—'}</td>
+          <td>${sub?.expiryDate ? formatDate(sub.expiryDate) : '—'}</td>
+          <td>${statusHtml}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // ── TRANSACTIONS ──
+  function renderTransactions() {
+    const txns = Storage.get('transactions', []);
+    const users = Storage.get('users', []);
+    const tbody = document.getElementById('txn-tbody');
+    if (!txns.length) { tbody.innerHTML = `<tr><td colspan="7" class="table-empty">No transactions found.</td></tr>`; return; }
+    tbody.innerHTML = txns.map(t => {
+      const user = users.find(u => u.id === t.userId);
+      return `
+        <tr>
+          <td><code style="font-size:11px;background:var(--color-bg-subtle);padding:2px 6px;border-radius:4px;">${t.id}</code></td>
+          <td><code style="font-size:11px;">${t.bookingId || '—'}</code></td>
+          <td>${user?.name || t.userId} / ${t.mechanicName || '—'}</td>
+          <td style="font-weight:var(--weight-bold);color:var(--color-success);">₹${(t.amount||0).toLocaleString('en-IN')}</td>
+          <td><span class="badge badge-info">${t.method || 'UPI'}</span></td>
+          <td>${statusBadge(t.status)}</td>
+          <td>${formatDateTime(t.createdAt)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // ── COMPLAINTS ──
+  function renderComplaints() {
+    const complaints = Storage.get('complaints', []);
+    const users = Storage.get('users', []);
+    const tbody = document.getElementById('complaints-tbody');
+    if (!complaints.length) { tbody.innerHTML = `<tr><td colspan="7" class="table-empty">No complaints found.</td></tr>`; return; }
+    tbody.innerHTML = complaints.map(c => {
+      const user = users.find(u => u.id === c.userId);
+      return `
+        <tr>
+          <td><code style="font-size:11px;background:var(--color-bg-subtle);padding:2px 6px;border-radius:4px;">${c.id}</code></td>
+          <td>${user?.name || c.userId}</td>
+          <td>${c.category || '—'}</td>
+          <td>${c.subject || '—'}</td>
+          <td id="complaint-status-${c.id}">${statusBadge(c.status)}</td>
+          <td>${formatDate(c.createdAt)}</td>
+          <td>
+            <select class="btn-table" onchange="updateComplaintStatus('${c.id}', this.value)" style="width:140px;">
+              <option value="">— Update Status —</option>
+              <option value="submitted" ${c.status==='submitted'?'selected':''}>Submitted</option>
+              <option value="under review" ${c.status==='under review'?'selected':''}>Under Review</option>
+              <option value="resolved" ${c.status==='resolved'?'selected':''}>Resolved</option>
+            </select>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function updateComplaintStatus(complaintId, newStatus) {
+    if (!newStatus) return;
+    const all = Storage.get('complaints', []);
+    const idx = all.findIndex(c => c.id === complaintId);
+    if (idx !== -1) {
+      all[idx].status = newStatus;
+      if (newStatus === 'resolved') all[idx].resolvedAt = new Date().toISOString();
+      Storage.set('complaints', all);
+      document.getElementById('complaint-status-' + complaintId).innerHTML = statusBadge(newStatus);
+      Toast.success('Status Updated', `Complaint ${complaintId} marked as "${newStatus}".`);
+    }
+  }
+
+  // ── INIT ──
+  renderOverview();
+</script>
+</body>
+</html>

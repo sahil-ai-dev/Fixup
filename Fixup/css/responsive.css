@@ -1,0 +1,260 @@
+/* =============================================
+   FIXUP — RESPONSIVE OVERRIDES
+   ============================================= */
+
+/* ═══════════════════════════════════════
+   BREAKPOINTS:
+   320px  – small phones
+   480px  – large phones
+   640px  – phablets
+   768px  – tablets portrait
+   1024px – tablets landscape / small laptops
+   1200px – laptops
+   1440px – desktops
+   ═══════════════════════════════════════ */
+
+/* ── Navbar ── */
+@media (max-width: 1024px) {
+  .navbar-inner { padding: 0 var(--space-4); }
+  .navbar-nav   { display: none; }
+  .nav-toggle   { display: flex; }
+  .navbar-actions .btn:not(.theme-toggle) { display: none; }
+}
+@media (max-width: 480px) {
+  .navbar-logo-text { font-size: var(--text-lg); }
+}
+
+/* ── Hero Section ── */
+@media (max-width: 1024px) {
+  .hero-inner {
+    grid-template-columns: 1fr !important;
+    text-align: center;
+  }
+  .hero-visual { display: none; }
+  .hero-actions { justify-content: center; }
+  .hero-trust  { justify-content: center; }
+}
+@media (max-width: 640px) {
+  .hero-actions { flex-direction: column; align-items: center; }
+  .hero-actions .btn { width: 100%; max-width: 280px; }
+}
+
+/* ── Search Bar ── */
+@media (max-width: 768px) {
+  .search-card { padding: var(--space-4) !important; }
+  .search-fields { grid-template-columns: 1fr !important; }
+}
+
+/* ── Service Cards ── */
+@media (max-width: 1200px) {
+  .services-grid { grid-template-columns: repeat(3, 1fr) !important; }
+}
+@media (max-width: 768px) {
+  .services-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 480px) {
+  .services-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── How It Works Steps ── */
+@media (max-width: 768px) {
+  .steps-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .step-connector { display: none !important; }
+}
+
+/* ── Feature Cards ── */
+@media (max-width: 1024px) {
+  .features-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 480px) {
+  .features-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── Mechanic Cards (Listing) ── */
+@media (max-width: 640px) {
+  .mechanic-card {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .mechanic-card-price { align-self: flex-start; }
+}
+
+/* ── Footer ── */
+@media (max-width: 1024px) {
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: var(--space-6); }
+}
+@media (max-width: 640px) {
+  .footer-grid { grid-template-columns: 1fr; }
+  .footer-brand { order: -1; }
+  .footer-bottom { flex-direction: column; text-align: center; gap: var(--space-3); }
+  .footer-bottom-links { flex-wrap: wrap; justify-content: center; }
+}
+
+/* ── Auth Pages ── */
+@media (max-width: 900px) {
+  .auth-split { grid-template-columns: 1fr !important; }
+  .auth-left  { display: none !important; }
+  .auth-right { min-height: 100vh; }
+}
+@media (max-width: 480px) {
+  .auth-card { padding: var(--space-5) var(--space-4) !important; }
+  .role-cards { grid-template-columns: 1fr; }
+  .otp-group .otp-input { width: 44px; height: 48px; font-size: var(--text-xl); }
+  .payment-method-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Dashboard – Sidebar ── */
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+    transform: translateX(-100%);
+    z-index: var(--z-overlay);
+    box-shadow: var(--shadow-xl);
+    width: var(--sidebar-width) !important; /* reset collapse */
+  }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .main-content { margin-left: 0 !important; }
+  .topbar-menu-btn { display: flex !important; }
+  .sidebar-toggle { display: none !important; }
+  .sidebar-label { display: block !important; }
+  .sidebar-logo-text { display: block !important; }
+  .sidebar-user-info { display: block !important; }
+  .sidebar-section-title { display: block !important; }
+}
+
+/* ── Dashboard Stats Grid ── */
+@media (max-width: 1200px) {
+  .dashboard-stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .dashboard-stats { grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+}
+@media (max-width: 480px) {
+  .dashboard-stats { grid-template-columns: 1fr; }
+}
+
+/* ── Dashboard Grid ── */
+@media (max-width: 1200px) {
+  .dashboard-grid-2 { grid-template-columns: 1fr !important; }
+}
+
+/* ── Content Area ── */
+@media (max-width: 768px) {
+  .content-area { padding: var(--space-4) var(--space-3); }
+  .page-title { font-size: var(--text-xl); }
+}
+@media (max-width: 480px) {
+  .content-area { padding: var(--space-3); }
+}
+
+/* ── Topbar ── */
+@media (max-width: 640px) {
+  .topbar { padding: 0 var(--space-3); }
+  .topbar-breadcrumb { display: none; }
+}
+
+/* ── Tables ── */
+@media (max-width: 768px) {
+  .table-wrap { border-radius: var(--radius-md); }
+  table { min-width: 600px; }
+}
+
+/* ── Tabs ── */
+@media (max-width: 640px) {
+  .tabs { overflow-x: auto; }
+  .tab-btn { font-size: var(--text-xs); padding: var(--space-2) var(--space-3); white-space: nowrap; }
+}
+
+/* ── Modal ── */
+@media (max-width: 640px) {
+  .modal-backdrop { padding: 0; align-items: flex-end; }
+  .modal {
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-height: 95vh;
+    max-width: 100%;
+    padding: var(--space-6) var(--space-4);
+  }
+}
+
+/* ── Stepper ── */
+@media (max-width: 640px) {
+  .stepper { overflow-x: auto; padding-bottom: var(--space-3); }
+  .stepper::before { display: none; }
+  .step-label { font-size: 10px; max-width: 60px; }
+  .step-num { width: 28px; height: 28px; font-size: var(--text-xs); }
+}
+
+/* ── Cards ── */
+@media (max-width: 480px) {
+  .card { padding: var(--space-4); }
+  .stat-card { padding: var(--space-4); }
+  .stat-card-value { font-size: var(--text-xl); }
+}
+
+/* ── Request Card ── */
+@media (max-width: 640px) {
+  .request-card-header { flex-direction: column; }
+  .request-card-actions { flex-wrap: wrap; }
+  .request-card-actions .btn { flex: 1; min-width: 120px; }
+}
+
+/* ── Booking Summary ── */
+@media (max-width: 480px) {
+  .payment-method-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Repair Status Timeline ── */
+@media (max-width: 480px) {
+  .timeline-item { gap: var(--space-3); }
+  .timeline-dot { width: 28px; height: 28px; }
+  .timeline-item:not(:last-child)::after { left: 13px; }
+}
+
+/* ── Toast on Mobile ── */
+@media (max-width: 480px) {
+  .toast-container {
+    top: auto;
+    bottom: var(--space-4);
+    right: var(--space-3);
+    left: var(--space-3);
+  }
+  .toast { min-width: 0; width: 100%; }
+}
+
+/* ── Availability Card ── */
+@media (max-width: 640px) {
+  .availability-card { flex-direction: column; gap: var(--space-3); align-items: flex-start; }
+}
+
+/* ── Admin Dashboard Tables ── */
+@media (max-width: 1024px) {
+  .admin-tabs { overflow-x: auto; }
+  .admin-content { min-width: 0; }
+}
+
+/* ── Section spacing ── */
+@media (max-width: 768px) {
+  .section    { padding: var(--space-12) 0; }
+  .section-lg { padding: var(--space-16) 0; }
+  .section-header { margin-bottom: var(--space-8); }
+}
+@media (max-width: 480px) {
+  .section    { padding: var(--space-10) 0; }
+}
+
+/* ── Typography on Mobile ── */
+@media (max-width: 480px) {
+  h1 { font-size: var(--text-3xl); }
+  h2 { font-size: var(--text-2xl); }
+  h3 { font-size: var(--text-xl); }
+  .section-subtitle { font-size: var(--text-base); }
+}
+
+/* ── Overflow Prevention ── */
+* { max-width: 100%; box-sizing: border-box; }
+img, video { max-width: 100%; height: auto; }
+pre, code { overflow-x: auto; }
+.no-overflow { overflow-x: hidden; }
+

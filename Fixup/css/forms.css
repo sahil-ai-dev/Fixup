@@ -1,0 +1,304 @@
+/* =============================================
+   FIXUP — FORMS CSS (Shared for dashboards)
+   ============================================= */
+
+/* ── Upload Zone ── */
+.upload-zone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  background: var(--color-bg-muted);
+  position: relative;
+}
+.upload-zone:hover,
+.upload-zone.drag-over {
+  border-color: var(--color-primary);
+  background: var(--color-accent);
+}
+.upload-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+.upload-zone-icon {
+  width: 48px; height: 48px;
+  background: var(--color-accent);
+  border-radius: var(--radius-lg);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-primary);
+  margin: 0 auto var(--space-3);
+}
+.upload-zone-title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
+}
+.upload-zone-subtitle {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* ── Image Preview ── */
+.image-preview {
+  position: relative;
+  display: inline-block;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid var(--color-border);
+}
+.image-preview img {
+  width: 200px; height: 150px;
+  object-fit: cover;
+}
+.image-preview-remove {
+  position: absolute;
+  top: var(--space-2); right: var(--space-2);
+  width: 28px; height: 28px;
+  background: var(--color-error);
+  color: white;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  border: none;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Multi-step Form ── */
+.step-content {
+  display: none;
+  animation: stepIn var(--transition-base) ease;
+}
+.step-content.active { display: block; }
+@keyframes stepIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Payment Method Selector ── */
+.payment-method-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.payment-method-option {
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  position: relative;
+}
+.payment-method-option:hover { border-color: var(--color-secondary); }
+.payment-method-option.selected {
+  border-color: var(--color-primary);
+  background: var(--color-accent);
+}
+.payment-method-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+}
+.payment-method-icon {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--text-xl);
+}
+.payment-method-label { font-size: var(--text-sm); font-weight: var(--weight-medium); }
+.payment-method-desc  { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+/* ── Booking Summary ── */
+.booking-summary {
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+.summary-row:last-child { border-bottom: none; }
+.summary-row.total {
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  margin-top: var(--space-2);
+}
+.summary-row.total span:last-child { color: var(--color-primary); }
+
+/* ── Confirmation Card ── */
+.confirmation-card {
+  text-align: center;
+  padding: var(--space-10) var(--space-6);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+.confirmation-icon {
+  width: 80px; height: 80px;
+  background: var(--color-success-bg);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-success);
+  margin: 0 auto var(--space-5);
+}
+.booking-id-display {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-primary);
+  background: var(--color-accent);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  display: inline-block;
+  margin: var(--space-3) 0;
+}
+
+/* ── Notification Dropdown ── */
+.notif-dropdown .dropdown-menu {
+  right: 0;
+  padding: 0;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ── OTP Input ── */
+.otp-group {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: center;
+}
+.otp-input {
+  width: 52px; height: 56px;
+  text-align: center;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  transition: all var(--transition-fast);
+}
+.otp-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(109,40,217,0.15);
+}
+
+/* ── Role Selector (Signup) ── */
+.role-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.role-card {
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+  position: relative;
+}
+.role-card:hover { border-color: var(--color-secondary); }
+.role-card.selected {
+  border-color: var(--color-primary);
+  background: var(--color-accent);
+}
+.role-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: var(--space-2); right: var(--space-2);
+  width: 22px; height: 22px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 50%;
+  font-size: var(--text-xs);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: var(--weight-bold);
+}
+.role-card-icon {
+  width: 56px; height: 56px;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-lg);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-secondary);
+  margin: 0 auto var(--space-3);
+  transition: all var(--transition-fast);
+}
+.role-card.selected .role-card-icon {
+  background: var(--gradient-primary);
+  color: white;
+}
+.role-card-title { font-size: var(--text-base); font-weight: var(--weight-semibold); }
+.role-card-desc  { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+
+/* ── Profile Completion ── */
+.profile-completion {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.profile-completion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+.profile-completion-pct {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-primary);
+}
+
+/* ── Mechanic Map Card ── */
+.map-placeholder {
+  background: linear-gradient(135deg, #e8f4f8, #d4e8f0);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  position: relative;
+  overflow: hidden;
+}
+.map-placeholder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 40px,
+    rgba(109,40,217,0.04) 40px, rgba(109,40,217,0.04) 41px
+  ),
+  repeating-linear-gradient(
+    90deg, transparent, transparent 40px,
+    rgba(109,40,217,0.04) 40px, rgba(109,40,217,0.04) 41px
+  );
+}
+
